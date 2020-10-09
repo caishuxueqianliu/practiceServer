@@ -57,6 +57,7 @@ app.use(function(req, res, next) {
   next(createError(404));
 });
 
+
 // error handler
 app.use(function(err, req, res, next) {
   // set locals, only providing error in development
@@ -67,18 +68,18 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+   //  app.listen(3000, () => {
+   //    console.log('服务器启动成功, 请访问: http://localhost:3000')
+   // })
+mongoose.connect('mongodb://localhost/admin_db', {useNewUrlParser: true})
+  .then(() => {
+    console.log('连接数据库成功!!!')
+    // 只有当连接上数据库后才去启动服务器
     app.listen(3000, () => {
       console.log('服务器启动成功, 请访问: http://localhost:3000')
    })
-// mongoose.connect('mongodb://localhost/admin_db', {useNewUrlParser: true})
-//   .then(() => {
-//     console.log('连接数据库成功!!!')
-//     // 只有当连接上数据库后才去启动服务器
-//     app.listen(3000, () => {
-//       console.log('服务器启动成功, 请访问: http://localhost:3000')
-//    })
-//   })
-//   .catch(error => {
-//     console.error('连接数据库失败！！！', error)
-//   })
+  })
+  .catch(error => {
+    console.error('连接数据库失败！！！', error)
+  })
 module.exports = app;

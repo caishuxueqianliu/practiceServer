@@ -1,6 +1,65 @@
-<!DOCTYPE html><html lang=en><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><link rel=icon href=/favicon.ico><title>Tools</title><link href=/css/about.697b67ea.css rel=prefetch><link href=/js/about.9aec4762.js rel=prefetch><link href=/css/app.1a8618b8.css rel=preload as=style><link href=/css/chunk-vendors.6612108b.css rel=preload as=style><link href=/js/app.698aef67.js rel=preload as=script><link href=/js/chunk-vendors.52c6778b.js rel=preload as=script><link href=/css/chunk-vendors.6612108b.css rel=stylesheet><link href=/css/app.1a8618b8.css rel=stylesheet></head><body><noscript></noscript><div id=app></div><script src=/js/chunk-vendors.52c6778b.js></script><script src=/js/app.698aef67.js></script></body></html><style type=text/css>body{
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    width: 100%;
-  }</style>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Cocos2d-html5 Hello World test</title>
+    <link rel="icon" type="image/GIF" href="res/favicon.ico"/>
+    <meta name="viewport" content="initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="full-screen" content="yes"/>
+    <meta name="screen-orientation" content="portrait"/>
+    <meta name="x5-fullscreen" content="true"/>
+    <meta name="360-fullscreen" content="true"/>
+    <style>
+        body, canvas, div {
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            -khtml-user-select: none;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+        }
+        .copy{
+            /*display: none;*/
+            opacity:0 ;
+        }
+    </style>
+</head>
+<body style="padding:0; margin: 0; background: #000;">
+<div class="copy">
+<input type="text" id="content" value=""/>
+<button type="button" onClick="copyUrl2()">复制</button>
+</div>
+<script>
+    function copyUrl2(){
+        var urlresult=document.getElementById("content");
+        urlresult.value='1231';
+        urlresult.select(); // 选择对象
+        document.execCommand("Copy"); // 执行浏览器复制命令
+      //  alert("已复制好，可贴粘。");
+    }
+</script>
+<script src="res/loading.js"></script>
+<canvas id="gameCanvas" width="480" height="720"></canvas>
+<script src="https://cdn.jsdelivr.net/clipboard.js/1.5.12/clipboard.min.js"></script>
+<script>
+    (function () {
+        var nav = window.navigator;
+        var ua = nav.userAgent.toLowerCase();
+        var uaResult = /android (\d+(?:\.\d+)+)/i.exec(ua) || /android (\d+(?:\.\d+)+)/i.exec(nav.platform);
+        if (uaResult) {
+            var osVersion = parseInt(uaResult[1]) || 0;
+            var browserCheck = ua.match(/(qzone|micromessenger|qqbrowser)/i);
+            if (browserCheck) {
+                var gameCanvas = document.getElementById("gameCanvas");
+                var ctx = gameCanvas.getContext('2d');
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(0, 0, 1, 1);
+            }
+        }
+    })();
+</script>
+<script src="http://pv.sohu.com/cityjson?ie=utf-8"></script>
+
+<script cocos src="game.min.js"></script>
+</body>
+</html>

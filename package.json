@@ -6,8 +6,14 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "alias": "0.0.5",
     "blueimp-md5": "^2.16.0",
     "body-parser": "^1.19.0",
+    "cmd": "^0.1.0",
+    "cmd-alias": "^0.1.0",
+    "cmd-command": "^0.1.0",
+    "cmd-flag": "^0.1.0",
+    "cmd-handler": "^0.1.0",
     "cookie-parser": "~1.4.4",
     "cookie-session": "^1.4.0",
     "debug": "~2.6.9",

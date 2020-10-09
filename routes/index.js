@@ -7,6 +7,11 @@ var svgCaptcha = require('svg-captcha');
 //var jwt = require('jsonwebtoken');
 var jwts = require('../utill/token.js');
 
+
+const cookieParser=require("cookie-parser");
+router.use(cookieParser());
+
+
 router.use(session({
   resave: true,  // 新增
   secret: 'itcast',
@@ -19,13 +24,43 @@ router.use(session({
 //   res.render('index', { title: 'Express' });
 // });
 
+// HTTP/1.1 200 OK
+// Date: Mon, 01 Dec 2008 01:15:39 GMT
+// Server: Apache/2.0.61 (Unix)
+// Access-Control-Allow-Origin: http://manage.leyou.com
+// Access-Control-Allow-Credentials: true
+// Access-Control-Allow-Methods: GET, POST, PUT
+// Access-Control-Allow-Headers: X-Custom-Header
+// Access-Control-Max-Age: 1728000
+// Content-Type: text/html; charset=utf-8
+// Content-Encoding: gzip
+// Content-Length: 0
+// Keep-Alive: timeout=2, max=100
+// Connection: Keep-Alive
+// Content-Type: text/plain
+router.post('/ceshi',(req,res,next)=>{
+   res.setHeader("Access-Control-Allow-Origin", "*");
+ res.setHeader("Access-Control-Allow-Methods", "GET, POST");
+ console.log(req.cookie)
+res.send({msg:'postok'})
 
+})
+router.get('/ceshi',(req,res)=>{
+ // res.cookie("userName",'张2',{maxAge: 20000, httpOnly: true});
+res.cookie('username','zhangsan'); 
 
+ //   res.setHeader("Access-Control-Allow-Origin", "*");
+ // res.setHeader("Access-Control-Allow-Methods", "GET, POST");
+res.send({msg:'getok'})
 
+});
 //登陆
 router.post('/login',(req,res,next)=>{
-
+ res.setHeader("Access-Control-Allow-Origin", "*");
+ res.setHeader("Access-Control-Allow-Methods", "GET, POST");
 //const {username,password,captcha}=req.body;
+//console.log(res)
+
  const {username,password}=req.body;
  var token=jwts.generateToken({username})
 
