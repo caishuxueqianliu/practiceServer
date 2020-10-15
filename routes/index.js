@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const UserModel = require('../models/UserModel')
+const BaModel = require('../models/BaModel')
 const md5 = require('blueimp-md5')
 var session = require('express-session')
 var svgCaptcha = require('svg-captcha');
@@ -59,22 +60,23 @@ router.post('/login',(req,res,next)=>{
  res.setHeader("Access-Control-Allow-Origin", "*");
  res.setHeader("Access-Control-Allow-Methods", "GET, POST");
 //const {username,password,captcha}=req.body;
-//console.log(res)
+console.log(new Date().toLocaleString())
 
- const {username,password}=req.body;
+ const {username,password}=req.body.values;
  var token=jwts.generateToken({username})
-
+// console.log(username)
  //  if(captcha!==req.session.captcha) {
  //    return res.send({code: 1, msg: '验证码不正确'})
  //  }
  //   // 删除保存的验证码
  // delete req.session.captcha
  UserModel.findOne({username}, function (err, user) {
+  console.log(user)
     if (user) {
        role_id=user.role_id;
        create_time=user.create_time;
       if (user.password!== password) {
-        console.log(user.password);
+       //console.log(user.password);
        return res.send({code: 1, msg: '密码不正确!'});
       } else {
         
@@ -114,8 +116,9 @@ router.post('/login',(req,res,next)=>{
 
 //注册
 router.post('/register',(req,res,next)=>{
+console.log(new Date().toLocaleString())
 
-const {username,password,captcha}=req.body;
+const {username,password,captcha}=req.body.values;
   if(captcha!==req.session.captcha) {
     return res.send({code: 1, msg: '验证码不正确'})
   }
@@ -128,16 +131,27 @@ if(user){
 
 }
 else {
-    
-    new UserModel(
+   
+    // new UserModel(
+    //   { 
+    //     username:req.body.username,
+    //     password:req.body.password,
+    //     role_id:0
+    // },false).save(function (err, user) {
+  
+    //     const data = {username: username}
+    //     res.send({code: 0, msg:'注册成功',data})
+    //   })
+   // console.log(username,password)
+   new UserModel(
       { 
-        username:req.body.username,
-        password:req.body.password,
+        username:username,
+        password:password,
         role_id:0
-    }).save(function (err, user) {
+    },false).save().then(()=>{
         const data = {username: username}
         res.send({code: 0, msg:'注册成功',data})
-      })
+      }).catch(err=>{console.log(err)})
     }
 
 
@@ -149,6 +163,7 @@ else {
 //修改密码
 
 router.post('/updatepwd',(req,res,next)=>{
+console.log(new Date().toLocaleString())
 
 const {newpassword}=req.body;
 const{token}= req.headers;
@@ -261,6 +276,7 @@ return res.send({code: 0, msg: 'token验证失败'})
 //发布内容
 router.post('/publish',(req,res,next)=>{
 
+console.log(new Date().toLocaleString())
 
 
 

@@ -10,6 +10,10 @@ const userSchema = new mongoose.Schema({
   username: {type: String, required: true}, // 用户名
   password: {type: String, required: true}, // 密码
   // phone: String,
+  est_ba:Object,
+  follow_ba:Object,
+  friend: Object,
+  tiezi: Object,
   token: String,
   create_time: {type: Number, default: Date.now},
   role_id: Number     //3为超级管理员，1为普通用户,2为会员用户
