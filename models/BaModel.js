@@ -7,12 +7,11 @@ const mongoose = require('mongoose')
 
 // 2.字义Schema(描述文档结构)
 const baSchema = new mongoose.Schema({
- 
-  belong_to: {type: String, required: true}, 
-  name:{type: String, required: true},
-  tiezi:Object,
-  follow:Object,
-  create_time: {type: Number, default: Date.now},
+    belong_to: {type: String, required: true},
+    name: {type: String, required: true},
+    tiezi: Array,
+    follow: Array,
+    create_time: {type: Number, default: Date.now},
 })
 
 // 3. 定义Model(与集合对应, 可以操作集合)
@@ -32,4 +31,4 @@ BaModel.findOne({name: '前端'}).then(ba => {
 })
 
 // 4. 向外暴露Model
-module.exports = BaModel
+module.exports = BaModel;
