@@ -16,7 +16,7 @@ var jwts={
         let cert='liuhao'
         let token = jwt.sign({
             datas, // 自定义字段
-            exp: created + 60 * 30, // 过期时间 30 分钟
+            exp: created + 60 * 300000, // 过期时间 30 分钟
             iat: created, // 创建时间
         }, cert);
         return token;
@@ -26,7 +26,11 @@ verifyToken:function(token,callback){
 
 
 jwt.verify(token, 'liuhao', (err, decoded)=> {
-  callback(decoded);
+    if (decoded) {
+        callback(decoded);
+    } else {
+        callback(err);
+    }
 });
 
 
