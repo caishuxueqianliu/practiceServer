@@ -1,25 +1,28 @@
 var express = require('express');
 var router = express.Router();
-const UserModel = require('../models/UserModel')
-const BaModel = require('../models/BaModel')
-const md5 = require('blueimp-md5')
-var session = require('express-session')
+const UserModel = require('../models/UserModel');
+const BaModel = require('../models/BaModel');
+const TieZiModel = require('../models/TieZiModel');
+
+const md5 = require('blueimp-md5');
+var session = require('express-session');
 var svgCaptcha = require('svg-captcha');
 //var jwt = require('jsonwebtoken');
 var jwts = require('../utill/token.js');
 
 
-const cookieParser=require("cookie-parser");
+
+const cookieParser = require("cookie-parser");
 router.use(cookieParser());
 
 
 router.use(session({
-  resave: true,  // 新增
-  secret: 'itcast',
-  resave: false,
-  saveUninitialized: true,// 无论你是否使用 Session ，我都默认直接给你分配一把钥匙
-  cookie: { maxAge: 60000 } 
-}))
+    // resave: true,  // 新增
+    secret: 'itcast',
+    resave: false,
+    saveUninitialized: true,// 无论你是否使用 Session ，我都默认直接给你分配一把钥匙
+    cookie: {maxAge: 60000}
+}));
 
 // router.get('/', function(req, res, next) {
 //   res.render('index', { title: 'Express' });
@@ -56,63 +59,66 @@ res.send({msg:'getok'})
 
 });
 //登陆
-router.post('/login',(req,res,next)=>{
- res.setHeader("Access-Control-Allow-Origin", "*");
- res.setHeader("Access-Control-Allow-Methods", "GET, POST");
+router.post('/login',(req,res,next)=> {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST");
 //const {username,password,captcha}=req.body;
-console.log(new Date().toLocaleString())
-
- const {username,password}=req.body.values;
- var token=jwts.generateToken({username})
+// console.log(new Date().toLocaleString())
+    const {accesstoken} = req.headers;
+    var {username, password} = req.body.values;
+    password = md5(password);
+    var token = jwts.generateToken({username});
 // console.log(username)
- //  if(captcha!==req.session.captcha) {
- //    return res.send({code: 1, msg: '验证码不正确'})
- //  }
- //   // 删除保存的验证码
- // delete req.session.captcha
- UserModel.findOne({username}, function (err, user) {
-  console.log(user)
-    if (user) {
-       role_id=user.role_id;
-       create_time=user.create_time;
-      if (user.password!== password) {
-       //console.log(user.password);
-       return res.send({code: 1, msg: '密码不正确!'});
-      } else {
-        
-  
+    //  if(captcha!==req.session.captcha) {
+    //    return res.send({code: 1, msg: '验证码不正确'})
+    //  }
+    //   // 删除保存的验证码
+    // delete req.session.captcha
 
+    if (accesstoken) {
+        console.log(accesstoken)
+        UserModel.findOne({username}, function (err, user) {
+            res.send({code: 0, data: user});
+        })
+    } else {
+        UserModel.findOne({username}, function (err, user) {
+            //console.log(user)
+            if (user) {
+                role_id = user.role_id;
+                create_time = user.create_time;
+                if (user.password !== password) {
+                    //console.log(user.password);
+                    return res.send({code: 1, msg: '密码不正确!'});
+                } else {
 
-    UserModel.updateOne(
-    {username: username},            //匹配的内容
-    {token:token},     //要更新的内容
-    /*回调函数*/
-    (err, docs)=>{
-        if(err){return res.send({code:1,msg:"token更新失败"})}
-        res.send({code: 0, data: { username: username,role_id:role_id,create_time:create_time,token:token}});
-    }
+                    UserModel.updateOne(
+                        {username: username},            //匹配的内容
+                        {token:token},     //要更新的内容
+                        /*回调函数*/
+                        (err, docs)=> {
+                            if (err) {
+                                return res.send({code: 1, msg: "token更新失败"})
+                            }
+                         else{
+                                UserModel.findOne({username}, function (err, user) {
+                                    res.send({code: 0, msg: 'login success!',data: user});
+                                })
+                            }
+                            //res.send({code: 0, data: { username: username,role_id:role_id,create_time:create_time,token:token}});
+
+                        }
 )
 
+                }
 
-
-
-
-       
-      }
-    }
-    else{
-      return     res.send({code: 1, msg: '用户名不正确!'});
-    }
+            } else{
+                return     res.send({code: 1, msg: '用户名不正确!'});
+            }
 })
 
-
+    }
 
 })
-
-
-
-
-
 
 //注册
 router.post('/register',(req,res,next)=>{
@@ -144,31 +150,157 @@ else {
     //   })
    // console.log(username,password)
    new UserModel(
-      { 
-        username:username,
-        password:password,
-        role_id:0
-    },false).save().then(()=>{
-        const data = {username: username}
-        res.send({code: 0, msg:'注册成功',data})
-      }).catch(err=>{console.log(err)})
-    }
-
+       {
+           username: username,
+           password: md5(password),
+           role_id: 0
+       }, false).save().then(() => {
+       const data = {username: username}
+       res.send({code: 0, msg: '注册成功', data})
+   }).catch(err => {
+       console.log(err)
+   })
+}
 
 
 })
 
-})
+});
+
+//获取所有贴吧
+router.get('/getBas', (req, res) => {
+    BaModel.find().then(data => {
+        res.send({code: 0, msg: "查询成功", data: data})
+    }).catch(err => {
+        console.log(err);
+        res.send({code: 1, msg: "查询失败"})
+    })
+
+
+});
+
+//获取指定吧所有帖子
+router.post('/getBaTie', (req, res) => {
+   // console.log(req.body)
+    const {baName}=req.body;
+console.log(baName)
+
+    TieZiModel.find({belong_to:baName}).then(data => {
+        res.send({code: 0, msg: "查询成功", data: data})
+    }).catch(err => {
+        console.log(err);
+        res.send({code: 1, msg: "查询失败"})
+    })
+
+    // res.send({code: 1, msg: "查询失败"})
+});
+
+
+
+//创建贴吧
+router.post('/est_ba', (req, res) => {
+    const {accesstoken} = req.headers;
+
+    const {baName} = req.body;
+
+    var belong_to;
+    // console.log(accesstoken)
+    jwts.verifyToken(accesstoken, (datax => {
+
+        // console.log(datax)
+        const {username} = datax.datas;
+        // console.log(username)
+        belong_to = username;
+
+        UserModel.findOne({username: belong_to}, function (err, user) {
+
+            if (user) {
+                //res.send({code: 1, msg: '用户名已存在'})
+                BaModel.findOne({baName: baName}, (err, ba) => {
+                    if (ba) {
+                        res.send({code: 1, msg: baName + '吧已经存在'})
+                    } else {
+                        new BaModel({baName: baName, belong_to}).save().then(data => {
+                            // res.send({code: 0, msg: baName+'吧创建成功',belong_to:belong_to})
+                            res.send({code: 0, msg: "创建成功", data: data})
+                        }).catch(err => {
+                            console.log(err);
+                            res.send({code: 1, msg: "创建失败"})
+                        })
+
+                    }
+                })
+
+
+            } else {
+                res.send({code: 1, msg: 'token无效'})
+            }
+        })
+
+    }));
+
+
+    // console.log(mingwen)
+    //console.log(accesstoken,baName)
+    //res.send({code:0,data:{msg:"贴吧创建完成",baName:baName,belong_to:belong_to}})
+});
+
+
+//发帖
+router.post("/publish", (req, res) => {
+    const {belong_to, title, content, picture} = req.body;
+    const {accesstoken} = req.headers;
+    var belong_toPerson;
+    console.log(accesstoken)
+    console.log(req.body)
+    jwts.verifyToken(accesstoken, (data => {
+
+        const {username} = data.datas;
+        belong_toPerson = username;
+
+       // console.log("username"+username)
+        UserModel.findOne({username: belong_toPerson}, function (err, user) {
+
+            if (user) {
+
+                BaModel.findOne({baName: belong_to}).then(ba => {
+                    if (ba) {
+                        new TieZiModel({
+                            id: md5(belong_toPerson + Date.now()),
+                            belong_to, belong_toPerson, title, content
+                        }).save().then(datas => {
+                            res.send({code: 0, msg: '帖子发布成功', data: datas})
+                        });
+                    } else {
+                        res.send({code: 1, msg: '此贴吧名不存在'})
+                    }
+
+                }).catch(err => {
+                    console.log(err);
+                    res.send({code: 1, msg: '数据库查找吧名失败'})
+                })
+
+
+            } else {
+                res.send({code: 1, msg: 'token无效'})
+            }
+
+        })
+    }));
+
+
+});
+
 
 //修改密码
 
-router.post('/updatepwd',(req,res,next)=>{
-console.log(new Date().toLocaleString())
+router.post('/updatepwd', (req, res, next) => {
+    console.log(new Date().toLocaleString())
 
-const {newpassword}=req.body;
-const{token}= req.headers;
+    const {newpassword} = req.body;
+    const {token} = req.headers;
 
-UserModel.updateOne(
+    UserModel.updateOne(
     {token: token},            //匹配的内容
     {password: newpassword},     //要更新的内容
     /*回调函数*/
