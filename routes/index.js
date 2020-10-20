@@ -11,6 +11,7 @@ var svgCaptcha = require('svg-captcha');
 var jwts = require('../utill/token.js');
 
 
+
 const cookieParser = require("cookie-parser");
 router.use(cookieParser());
 
@@ -75,6 +76,7 @@ router.post('/login',(req,res,next)=> {
     // delete req.session.captcha
 
     if (accesstoken) {
+        console.log(accesstoken)
         UserModel.findOne({username}, function (err, user) {
             res.send({code: 0, data: user});
         })
@@ -97,13 +99,18 @@ router.post('/login',(req,res,next)=> {
                             if (err) {
                                 return res.send({code: 1, msg: "token更新失败"})
                             }
+                         else{
+                                UserModel.findOne({username}, function (err, user) {
+                                    res.send({code: 0, msg: 'login success!',data: user});
+                                })
+                            }
                             //res.send({code: 0, data: { username: username,role_id:role_id,create_time:create_time,token:token}});
 
                         }
 )
 
                 }
-                res.send({code: 0, data: user});
+
             } else{
                 return     res.send({code: 1, msg: '用户名不正确!'});
             }
@@ -166,11 +173,30 @@ router.get('/getBas', (req, res) => {
         res.send({code: 0, msg: "查询成功", data: data})
     }).catch(err => {
         console.log(err);
-        res.send({code: 1, msg: "查询失败", data: data})
+        res.send({code: 1, msg: "查询失败"})
     })
 
 
 });
+
+//获取指定吧所有帖子
+router.post('/getBaTie', (req, res) => {
+   // console.log(req.body)
+    const {baName}=req.body;
+console.log(baName)
+
+    TieZiModel.find({belong_to:baName}).then(data => {
+        res.send({code: 0, msg: "查询成功", data: data})
+    }).catch(err => {
+        console.log(err);
+        res.send({code: 1, msg: "查询失败"})
+    })
+
+    // res.send({code: 1, msg: "查询失败"})
+});
+
+
+
 //创建贴吧
 router.post('/est_ba', (req, res) => {
     const {accesstoken} = req.headers;
@@ -225,38 +251,44 @@ router.post("/publish", (req, res) => {
     const {belong_to, title, content, picture} = req.body;
     const {accesstoken} = req.headers;
     var belong_toPerson;
-    jwts.verifyToken(accesstoken, (res => {
-        const {username} = res.datas;
+    console.log(accesstoken)
+    console.log(req.body)
+    jwts.verifyToken(accesstoken, (data => {
+
+        const {username} = data.datas;
         belong_toPerson = username;
+
+       // console.log("username"+username)
+        UserModel.findOne({username: belong_toPerson}, function (err, user) {
+
+            if (user) {
+
+                BaModel.findOne({baName: belong_to}).then(ba => {
+                    if (ba) {
+                        new TieZiModel({
+                            id: md5(belong_toPerson + Date.now()),
+                            belong_to, belong_toPerson, title, content
+                        }).save().then(datas => {
+                            res.send({code: 0, msg: '帖子发布成功', data: datas})
+                        });
+                    } else {
+                        res.send({code: 1, msg: '此贴吧名不存在'})
+                    }
+
+                }).catch(err => {
+                    console.log(err);
+                    res.send({code: 1, msg: '数据库查找吧名失败'})
+                })
+
+
+            } else {
+                res.send({code: 1, msg: 'token无效'})
+            }
+
+        })
     }));
 
-    UserModel.findOne({username: belong_toPerson}, function (err, user) {
 
-        if (user) {
-
-            BaModel.findOne({baName: belong_to}).then(ba => {
-                if (ba) {
-                    new TieZiModel({
-                        id: md5(belong_toPerson + Date.now()),
-                        belong_to, belong_toPerson, title, content
-                    }).save().then(res => {
-                        res.send({code: 0, msg: '帖子发布成功', data: res})
-                    });
-                } else {
-                    res.send({code: 1, msg: '此贴吧名不存在'})
-                }
-
-            }).catch(err => {
-                console.log(err);
-                res.send({code: 1, msg: '数据库查找吧名失败'})
-            })
-
-
-        } else {
-            res.send({code: 1, msg: 'token无效'})
-        }
-
-    })
 });
 
 

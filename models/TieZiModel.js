@@ -24,7 +24,7 @@ const tieziSchema = new mongoose.Schema({
 const TieZiModel = mongoose.model('tiezis', tieziSchema);
 
 // 初始化默认超级管理员用户: admin/admin
-TieZiModel.findOne({username: 'liuhao'}).then(tiezi => {
+TieZiModel.findOne({belong_toPerson: 'liuhao'}).then(tiezi => {
   if(!tiezi) {
     TieZiModel.create({
       id: md5('liuhao' + Date.now()),

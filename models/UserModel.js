@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
     tiezi: Array,//发的帖子以帖子id形式存储
     token: String,
     create_time: {type: Number, default: Date.now},
-    //role_id: Number     //3为超级管理员，1为普通用户,2为会员用户
+    role_id: Number     //3为超级管理员，1为普通用户,2为会员用户
 });
 
 // 3. 定义Model(与集合对应, 可以操作集合)
