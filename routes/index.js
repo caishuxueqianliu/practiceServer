@@ -3,7 +3,7 @@ var router = express.Router();
 const UserModel = require('../models/UserModel');
 const BaModel = require('../models/BaModel');
 const TieZiModel = require('../models/TieZiModel');
-
+const CommitModel = require('../models/CommitModel');
 const md5 = require('blueimp-md5');
 var session = require('express-session');
 var svgCaptcha = require('svg-captcha');
@@ -290,6 +290,85 @@ router.post("/publish", (req, res) => {
 
 
 });
+
+//帖子详情
+router.post('/getTieContent', (req, res) => {
+
+    const {tieId} = req.body;
+ console.log(tieId)
+        TieZiModel.find({id: tieId}, function (err, tie) {
+
+            if (tie) {
+               res.send({code: 1, msg: '查询成功',data:tie})
+
+
+
+            } else {
+                res.send({code: 1, msg: '帖子查询错误'})
+            }
+        })
+
+
+
+
+    // console.log(mingwen)
+    //console.log(accesstoken,baName)
+    //res.send({code:0,data:{msg:"贴吧创建完成",baName:baName,belong_to:belong_to}})
+});
+
+//评论
+router.post("/commit", (req, res) => {
+    const {oid, username, content, picture} = req.body;
+    const {accesstoken} = req.headers;
+    var belong_toPerson;
+    // console.log(accesstoken)
+    // console.log(req.body)
+    jwts.verifyToken(accesstoken, (data => {
+
+        const {username} = data.datas;
+        belong_toPerson = username;
+
+        // console.log("username"+username)
+       new CommitModel({
+          username:username , // 用户名
+         commit:content,
+        picture: picture,
+        id:md5(username + Date.now()),
+        oid:oid
+           }).save().then(xx=>{
+           console.log(oid)
+           TieZiModel.findOne( {id:oid}).then(data=>{
+               console.log(data)
+               var commit=data.commit;
+               commit.push(xx);
+               TieZiModel.updateOne(
+                   {id:oid}, //条件
+                   {commit: commit},     //要更新的内容
+
+                   (err, docs)=>{
+                   if(err){
+                       return console.log('更新数据失败');
+                   }
+                       res.send({code: 0, msg: "commit success"})
+               }
+           )
+
+           })
+
+
+
+       })
+
+            // } else {
+            //     res.send({code: 1, msg: 'token无效'})
+            // }
+
+
+    }));
+
+
+});
+
 
 
 //修改密码
