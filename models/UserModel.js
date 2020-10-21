@@ -9,7 +9,7 @@ const md5 = require('blueimp-md5');
 const userSchema = new mongoose.Schema({
     username: {type: String, required: true}, // 用户名
     password: {type: String, required: true}, // 密码
-    user_portrait: String,//用户头像
+    icon: String,//用户头像
     sign: String,//个人签名
     follow: Array,//关注的人
     est_ba: Array,//{arr:[],lenth:est_ba.arr.lenth-1}/创建的吧

@@ -1,5 +1,8 @@
 var express = require('express');
 var router = express.Router();
+var fs = require('fs');
+var path = require('path');
+
 const UserModel = require('../models/UserModel');
 const BaModel = require('../models/BaModel');
 const TieZiModel = require('../models/TieZiModel');
@@ -9,7 +12,9 @@ var session = require('express-session');
 var svgCaptcha = require('svg-captcha');
 //var jwt = require('jsonwebtoken');
 var jwts = require('../utill/token.js');
-
+var formidable = require('../node_modules/formidable');
+router.use("/public/", express.static(path.join(__dirname, './public/')))
+router.use("/node_modules/", express.static(path.join(__dirname, './node_modules/')))
 
 
 const cookieParser = require("cookie-parser");
@@ -111,14 +116,14 @@ router.post('/login',(req,res,next)=> {
 
                 }
 
-            } else{
-                return     res.send({code: 1, msg: '用户名不正确!'});
+            } else {
+                return res.send({code: 1, msg: '用户名不正确!'});
             }
-})
+        })
 
     }
 
-})
+});
 
 //注册
 router.post('/register',(req,res,next)=>{
@@ -359,9 +364,9 @@ router.post("/commit", (req, res) => {
 
        })
 
-            // } else {
-            //     res.send({code: 1, msg: 'token无效'})
-            // }
+        // } else {
+        //     res.send({code: 1, msg: 'token无效'})
+        // }
 
 
     }));
@@ -369,6 +374,141 @@ router.post("/commit", (req, res) => {
 
 });
 
+//upload//头像
+router.post('/icon', (req, res) => {
+    // res.setHeader("Access-Control-Allow-Origin", "*");
+    // res.setHeader("Access-Control-Allow-Methods", "GET, POST");
+    const {userInfo} = req.cookies;
+    const assessToken = JSON.parse(userInfo).token;
+
+    // const {username}=req.username
+    let form = new formidable.IncomingForm();
+    form.uploadDir = "./icon";
+    form.on('field', (field, value) => {
+        // console.log(field);
+        // console.log(value);
+    });
+    form.on('file', (name, file) => {
+        // console.log(name);
+        // console.log(file);
+    });
+    form.on('end', () => {
+        res.end('upload complete');
+    })
+    form.parse(req, (err, fields, files) => {
+        //重命名
+        // console.log(file)
+        // console.log(obj.length)
+        const {username} = fields;
+        //      console.log(username)
+        let extname = path.extname(files.file.name);
+        let dirname = path.join(__dirname, "../");
+        let oldpath = dirname + files.file.path;
+        // console.log(oldpath)
+        let newpath = dirname + 'icon/' + md5(username) + ".jpg";
+        // console.log(newpath)
+        fs.rename(oldpath, newpath, () => {
+            // console.log(112)
+        });
+
+        // UserModel.findOne({username:username})
+        jwts.verifyToken(assessToken, (xx => {
+// console.log(username)
+            const usernameObj = xx.datas;
+            UserModel.updateOne(
+                usernameObj, //条件
+                {icon: md5(username)},
+                (err, docs) => {
+                    if (err) {
+                        return console.log('更新数据失败');
+                    }
+                    // console.log(docs);
+                    //res.send({code:0,msg:"头像修改成功"})
+                }
+            )
+        }))
+
+
+    });
+
+    // res.send({code:0,msg:"头像修改成功"})
+    res.send('2')
+})
+
+//uoload
+// router.post('/image',(req,res)=>{
+//     // res.setHeader("Access-Control-Allow-Origin", "*");
+//     // res.setHeader("Access-Control-Allow-Methods", "GET, POST");
+//     // console.log(req)
+//     let form = new formidable.IncomingForm();
+//     form.uploadDir = "./uploads";
+//     form.on('field',(field,value)=>{
+//         // console.log(field);
+//         // console.log(value);
+//     });
+//     form.on('file',(name,file)=>{
+//         // console.log(name);
+//         // console.log(file);
+//     });
+//     form.on('end',()=>{
+//         res.end('upload complete');
+//     })
+//     form.parse(req,(err,fields,files)=>{
+//         //重命名
+//        console.log(files)
+//         var obj=[]
+//         for (var i in files ){
+//             obj.push(files[i])
+//
+//         }
+//        // console.log(obj.length)
+//         for (var i = 1; i <= obj.length+1; i++) {
+//
+//
+//             let extname = path.extname(files.file.name);
+//             let dirname=path.join(__dirname,"../");
+//             let oldpath=dirname+files.file.path
+//            // console.log(oldpath)
+//             let newpath = dirname + 'uploads/' +i+ extname;
+//            // console.log(newpath)
+//             fs.rename(oldpath, newpath,()=>{
+//                // console.log(112)
+//             });
+//         }
+//
+//
+// //let ran =parseInt((Math.random()*10+1))
+//
+//         // let extname = path.extname(files.file.name);
+//         // let oldpath=__dirname+'/'+files.file.path
+//         // let newpath = __dirname + '/uploads/' +ran+ extname;
+//         // fs.rename(oldpath, newpath,function(err){
+//         //     if(err){
+//         //         throw Error("改名失败");
+//         //     }
+//         // });
+//
+//
+//
+// //         var keys = Object.keys(obj);
+// // console.log('长度', keys.length);
+// // keys.forEach(function(key, index) {
+// //   console.log('当前是第', index + 1, '个, key是', key, ', value是', obj[key]);
+// // });
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//     });
+//
+//
+//     res.send('2')
+// })
 
 
 //修改密码
