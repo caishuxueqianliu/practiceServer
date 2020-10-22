@@ -206,7 +206,7 @@ console.log(baName)
 router.post('/est_ba', (req, res) => {
     const {accesstoken} = req.headers;
 
-    const {baName} = req.body;
+    const {baName, ba_portrait} = req.body;
 
     var belong_to;
     // console.log(accesstoken)
@@ -225,7 +225,7 @@ router.post('/est_ba', (req, res) => {
                     if (ba) {
                         res.send({code: 1, msg: baName + '吧已经存在'})
                     } else {
-                        new BaModel({baName: baName, belong_to}).save().then(data => {
+                        new BaModel({baName: baName, belong_to, ba_portrait: md5(baName)}).save().then(data => {
                             // res.send({code: 0, msg: baName+'吧创建成功',belong_to:belong_to})
                             res.send({code: 0, msg: "创建成功", data: data})
                         }).catch(err => {
@@ -274,6 +274,17 @@ router.post("/publish", (req, res) => {
                             id: md5(belong_toPerson + Date.now()),
                             belong_to, belong_toPerson, title, content
                         }).save().then(datas => {
+                            BaModel.updateOne(
+                                {baName: belong_to}, //条件
+                                {$set: {tiezi: datas.title, lastupdate: new Date().toLocaleString()}},
+
+
+                                (err, docs) => {
+                                    if (err) {
+                                        return console.log('更新数据失败');
+                                    }
+                                    console.log(docs);
+                                })
                             res.send({code: 0, msg: '帖子发布成功', data: datas})
                         });
                     } else {
@@ -434,6 +445,95 @@ router.post('/icon', (req, res) => {
     // res.send({code:0,msg:"头像修改成功"})
     res.send('2')
 })
+
+//upload个签
+router.post('/sign', (req, res) => {
+    // res.setHeader("Access-Control-Allow-Origin", "*");
+    // res.setHeader("Access-Control-Allow-Methods", "GET, POST");
+    const {accesstoken} = req.headers;
+    const {signValue} = req.body;
+
+    jwts.verifyToken(accesstoken, (xx => {
+
+        const usernameObj = xx.datas;
+        UserModel.updateOne(
+            usernameObj, //条件
+            {sign: signValue},
+            (err, docs) => {
+                if (err) {
+                    return console.log('更新数据失败');
+                }
+                // console.log(docs);
+                res.send({code: 0, msg: "修改成功"})
+            }
+        )
+    }))
+
+
+});
+
+//upload 吧头像
+router.post('/baIcon', (req, res) => {
+    // res.setHeader("Access-Control-Allow-Origin", "*");
+    // res.setHeader("Access-Control-Allow-Methods", "GET, POST");
+    const {baName} = req.body;
+    const {userInfo} = req.cookies;
+    const assessToken = JSON.parse(userInfo).token;
+
+    // const {username}=req.username
+    let form = new formidable.IncomingForm();
+    form.uploadDir = "./icon";
+    form.on('field', (field, value) => {
+        // console.log(field);
+        // console.log(value);
+    });
+    form.on('file', (name, file) => {
+        // console.log(name);
+        // console.log(file);
+    });
+    form.on('end', () => {
+        res.end('upload complete');
+    })
+    form.parse(req, (err, fields, files) => {
+        //重命名
+        // console.log(file)
+        // console.log(obj.length)
+        const {username} = fields;
+        //      console.log(username)
+        let extname = path.extname(files.file.name);
+        let dirname = path.join(__dirname, "../");
+        let oldpath = dirname + files.file.path;
+        // console.log(oldpath)
+        let newpath = dirname + 'baIcon/' + md5(baName) + ".jpg";
+        // console.log(newpath)
+        fs.rename(oldpath, newpath, () => {
+            // console.log(112)
+        });
+
+        // UserModel.findOne({username:username})
+        jwts.verifyToken(assessToken, (xx => {
+// console.log(username)
+            const usernameObj = xx.datas;
+            // BaModel.updateOne(
+            //     usernameObj, //条件
+            //     {icon: md5(username)},
+            //     (err, docs) => {
+            //         if (err) {
+            //             return console.log('更新数据失败');
+            //         }
+            //         // console.log(docs);
+            //         //res.send({code:0,msg:"头像修改成功"})
+            //     }
+            // )
+        }))
+
+
+    });
+
+    // res.send({code:0,msg:"头像修改成功"})
+    res.send('2')
+})
+
 
 //uoload
 // router.post('/image',(req,res)=>{
