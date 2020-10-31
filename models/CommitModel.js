@@ -8,15 +8,15 @@ const mongoose = require('mongoose')
 // 2.字义Schema(描述文档结构)
 const commitSchema = new mongoose.Schema({
   username: {type: String, required: true}, // 用户名
+  usernameId: {type: String, required: true},
   create_time: {type: Number, default: Date.now},
-  commit:{type:String,required: true},
+  commit: {type: String, required: true},
   picture: Array,
-  id:{type:String,required: true},
-  oid:{type:String,required: true},
+  id: {type: String, required: true},
+  oid: {type: String, required: true},
 
 
-
-})
+});
 
 // 3. 定义Model(与集合对应, 可以操作集合)
 const CommitModel = mongoose.model('commits', commitSchema)

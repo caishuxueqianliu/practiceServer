@@ -56,7 +56,7 @@ res.send({msg:'postok'})
 })
 router.get('/ceshi',(req,res)=>{
  // res.cookie("userName",'张2',{maxAge: 20000, httpOnly: true});
-res.cookie('username','zhangsan'); 
+res.cookie('username', 'zhangsan');
 
  //   res.setHeader("Access-Control-Allow-Origin", "*");
  // res.setHeader("Access-Control-Allow-Methods", "GET, POST");
@@ -142,14 +142,14 @@ if(user){
 
 }
 else {
-   
+
     // new UserModel(
-    //   { 
+    //   {
     //     username:req.body.username,
     //     password:req.body.password,
     //     role_id:0
     // },false).save(function (err, user) {
-  
+
     //     const data = {username: username}
     //     res.send({code: 0, msg:'注册成功',data})
     //   })
@@ -190,7 +190,7 @@ router.post('/getBaTie', (req, res) => {
     const {baName}=req.body;
 console.log(baName)
 
-    TieZiModel.find({belong_to:baName}).then(data => {
+    TieZiModel.find({belong_to: baName}).then(data => {
         res.send({code: 0, msg: "查询成功", data: data})
     }).catch(err => {
         console.log(err);
@@ -200,6 +200,18 @@ console.log(baName)
     // res.send({code: 1, msg: "查询失败"})
 });
 
+//获取用户所有帖子
+router.post('/getUserTie', (req, res) => {
+    const {username} = req.body
+    console.log(username)
+    TieZiModel.find({belong_toPerson: username}).then(data => {
+        res.send({code: 0, msg: "查询成功", data: data})
+    }).catch(err => {
+        console.log(err);
+        res.send({code: 1, msg: "查询失败"})
+    })
+
+});
 
 
 //创建贴吧
@@ -272,6 +284,7 @@ router.post("/publish", (req, res) => {
                     if (ba) {
                         new TieZiModel({
                             id: md5(belong_toPerson + Date.now()),
+                            belong_toPerson_MD5: md5(belong_toPerson),
                             belong_to, belong_toPerson, title, content
                         }).save().then(datas => {
                             BaModel.updateOne(
@@ -345,24 +358,25 @@ router.post("/commit", (req, res) => {
         belong_toPerson = username;
 
         // console.log("username"+username)
-       new CommitModel({
-          username:username , // 用户名
-         commit:content,
-        picture: picture,
-        id:md5(username + Date.now()),
-        oid:oid
-           }).save().then(xx=>{
-           console.log(oid)
-           TieZiModel.findOne( {id:oid}).then(data=>{
-               console.log(data)
-               var commit=data.commit;
-               commit.push(xx);
-               TieZiModel.updateOne(
-                   {id:oid}, //条件
-                   {commit: commit},     //要更新的内容
+        new CommitModel({
+            username: username, // 用户名
+            commit: content,
+            picture: picture,
+            usernameId: md5(username),
+            id: md5(username + Date.now()),
+            oid: oid
+        }).save().then(xx => {
+            // console.log(oid)
+            TieZiModel.findOne({id: oid}).then(data => {
+                console.log(data)
+                var commit = data.commit;
+                commit.push(xx);
+                TieZiModel.updateOne(
+                    {id: oid}, //条件
+                    {commit: commit},     //要更新的内容
 
-                   (err, docs)=>{
-                   if(err){
+                    (err, docs) => {
+                        if (err) {
                        return console.log('更新数据失败');
                    }
                        res.send({code: 0, msg: "commit success"})
@@ -454,7 +468,6 @@ router.post('/sign', (req, res) => {
     const {signValue} = req.body;
 
     jwts.verifyToken(accesstoken, (xx => {
-
         const usernameObj = xx.datas;
         UserModel.updateOne(
             usernameObj, //条件
@@ -694,29 +707,28 @@ router.get('/captcha', function (req,res,next) {
     noise: 2,
     color: true
   });
-    req.session.captcha = captcha.text.toLowerCase();  
+    req.session.captcha = captcha.text.toLowerCase();
     //console.log(req.session.captcha)
     res.type('svg');
   res.send(captcha.data);
 });
 
 
- 
- //token验证
+//token验证
 
 
 router.post('/token', function (req,res,next) {
- 
- const {token}=req.body
 
-UserModel.findOne({token:token}, function (err, user) {
+    const {token} = req.body
 
-if(user){
+    UserModel.findOne({token: token}, function (err, user) {
 
- return res.send({code: 1, msg: {username:user.username,role_id:user.role_id}})
+        if (user) {
 
-}
-return res.send({code: 0, msg: 'token验证失败'})
+            return res.send({code: 1, msg: {username: user.username, role_id: user.role_id}})
+
+        }
+        return res.send({code: 0, msg: 'token验证失败'})
 
 });
 

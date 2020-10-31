@@ -10,6 +10,7 @@ const tieziSchema = new mongoose.Schema({
   id: {type: String, required: true}, // 贴子id
   belong_to: {type: String, required: true}, // 所属贴吧
   belong_toPerson: {type: String, required: true},// 发帖人
+  belong_toPerson_MD5: {type: String, required: true},// 发帖人
   title: {type: String, required: true},//标题
   content: {type: String, required: true},//内容
   picture: Array,//一楼配图
@@ -30,6 +31,7 @@ TieZiModel.findOne({belong_toPerson: 'liuhao'}).then(tiezi => {
       id: md5('liuhao' + Date.now()),
       belong_to: "前端",
       belong_toPerson: "liuhao",
+      belong_toPerson_MD5: md5("liuhao"),
       title: "ceshi",
       content: "ceshicontent"
     })
