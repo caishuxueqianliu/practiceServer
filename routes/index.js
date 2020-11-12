@@ -3,10 +3,12 @@ var router = express.Router();
 var fs = require('fs');
 var path = require('path');
 
-const UserModel = require('../models/UserModel');
-const BaModel = require('../models/BaModel');
-const TieZiModel = require('../models/TieZiModel');
-const CommitModel = require('../models/CommitModel');
+const UserModel = require('../models/userModel');
+const BaModel = require('../models/baModel');
+const TieZiModel = require('../models/tieziModel');
+const CommitModel = require('../models/commitModel');
+const ChatListModel = require('../models/ChatListModel');
+const ChatModel = require('../models/chatModel');
 const md5 = require('blueimp-md5');
 var session = require('express-session');
 var svgCaptcha = require('svg-captcha');
@@ -124,15 +126,21 @@ router.post('/login',(req,res,next)=> {
     }
 
 });
+//获取所以用户
+router.get("/getUser", (req, res) => {
+    UserModel.find().then(data => {
+        res.send(data)
+    })
 
+});
 //注册
-router.post('/register',(req,res,next)=>{
-console.log(new Date().toLocaleString())
+router.post('/register', (req, res, next) => {
+    console.log(new Date().toLocaleString())
 
-const {username,password,captcha}=req.body.values;
-  if(captcha!==req.session.captcha) {
-    return res.send({code: 1, msg: '验证码不正确'})
-  }
+    const {username, password, captcha} = req.body.values;
+    if (captcha !== req.session.captcha) {
+        return res.send({code: 1, msg: '验证码不正确'})
+    }
   // 删除保存的验证码
  delete req.session.captcha
 UserModel.findOne({username}, function (err, user) {
@@ -459,6 +467,67 @@ router.post('/icon', (req, res) => {
     // res.send({code:0,msg:"头像修改成功"})
     res.send('2')
 })
+//upload//帖子图片
+router.post('/tiePicture', (req, res) => {
+    // res.setHeader("Access-Control-Allow-Origin", "*");
+    // res.setHeader("Access-Control-Allow-Methods", "GET, POST");
+    const {userInfo} = req.cookies;
+    const assessToken = JSON.parse(userInfo).token;
+    // const {picId}=req.body;
+
+    // const {username}=req.username
+    let form = new formidable.IncomingForm();
+    form.uploadDir = "./tiePicture";
+    form.on('field', (field, value) => {
+        // console.log(field);
+        // console.log(value);
+    });
+    form.on('file', (name, file) => {
+        // console.log(name);
+        // console.log(file);
+    });
+    form.on('end', () => {
+        res.end('upload complete');
+    });
+    var pictureArr = [];
+    var picId;
+    form.parse(req, (err, fields, files) => {
+
+        picId = fields.picId;
+
+        let extname = path.extname(files.file.name);
+
+        let dirname = path.join(__dirname, "../");
+        let oldpath = dirname + files.file.path;
+
+        let newpath = dirname + 'tiePicture/' + picId + ".jpg";
+        pictureArr.push(picId);
+        fs.rename(oldpath, newpath, () => {
+            // console.log(oldpath)
+            // console.log(newpath)
+        });
+
+
+        jwts.verifyToken(assessToken, (xx => {
+            // console.log(pictureArr)
+            TieZiModel.updateOne(
+                {id: picId}, //条件
+                {picture: pictureArr},
+                (err, docs) => {
+                    if (err) {
+                        return console.log('更新数据失败');
+                    }
+                    console.log("ok");
+                    //res.send({code:0,msg:"头像修改成功"})
+                }
+            )
+        }))
+
+    });
+
+
+    res.send('2')
+})
 
 //upload个签
 router.post('/sign', (req, res) => {
@@ -546,6 +615,44 @@ router.post('/baIcon', (req, res) => {
     // res.send({code:0,msg:"头像修改成功"})
     res.send('2')
 })
+
+
+//聊天相关
+
+//一对一聊天，点开聊天窗口时创建
+router.post("/addDoubleChat", ((req, res) => {
+    console.log(req.body)
+    let {user1, user2} = req.body;
+    user1 = md5(user1);
+    user2 = md5(user2);
+    var listId;
+    if (user1 > user2) {
+        listId = user1 + user2;
+    } else {
+        listId = user2 + user1;
+    }
+
+
+// console.log(listId)
+    ChatListModel.findOne({id: listId}).then(chatlist => {
+        //console.log(res)
+        if (!chatlist) {
+            new ChatListModel({
+                id: listId,
+                user1: user1,
+                user2: user2
+            }).save().then(data => {
+                res.send({data: data});
+            })
+
+        } else if (chatlist) {
+            res.send({data: chatlist});
+        }
+
+    });
+
+
+}));
 
 
 //uoload

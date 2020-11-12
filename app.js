@@ -8,6 +8,7 @@ const mongoose = require('mongoose')
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var websocket = require('./routes/websocket');
+//var ws = require('./routes/ws');
 var chat = require('./routes/chat');
 var app = express();
 expressWs(app);
@@ -16,6 +17,7 @@ var bodyParser = require('body-parser');
 app.set('views', path.join(__dirname, 'views'));
 app.use("/icon/", express.static(path.join(__dirname, './icon/')));
 app.use("/baIcon/", express.static(path.join(__dirname, './baIcon/')))
+app.use("/tiePicture/", express.static(path.join(__dirname, './tiePicture/')))
 app.set('view engine', 'ejs');
 
 app.use(logger('dev'));
@@ -28,8 +30,8 @@ app.use(bodyParser.json())
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/', chat);
-
-app.use('/websocket', websocket);
+//app.use('/', ws);
+app.use('/', websocket);
 
 var session = require('express-session')
 
@@ -37,17 +39,17 @@ app.use(session({
   secret: 'liuhao',
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: true }
+  cookie: {secure: true}
 }))
 // var cookieSession = require('cookie-session')
- 
+
 // app.set('trust proxy', 1) // trust first proxy
- 
+
 // app.use(cookieSession({
 //   name: 'session',
 //   keys: ['key1', 'key2']
 // }))
- 
+
 // app.post('/pos',(req,res,next)=>{
 
 //   //res.send({msg:req})
@@ -77,9 +79,9 @@ mongoose.connect('mongodb://localhost/admin_db', {useNewUrlParser: true})
   .then(() => {
     console.log('连接数据库成功!!!')
     // 只有当连接上数据库后才去启动服务器
-    app.listen(3000, () => {
+    app.listen(4000, () => {
       console.log('服务器启动成功, 请访问: http://localhost:3000')
-   })
+    })
   })
   .catch(error => {
     console.error('连接数据库失败！！！', error)
