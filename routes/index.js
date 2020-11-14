@@ -9,6 +9,7 @@ const TieZiModel = require('../models/tieziModel');
 const CommitModel = require('../models/commitModel');
 const ChatListModel = require('../models/ChatListModel');
 const ChatModel = require('../models/chatModel');
+const QunModel = require('../models/QunModel');
 const md5 = require('blueimp-md5');
 var session = require('express-session');
 var svgCaptcha = require('svg-captcha');
@@ -621,7 +622,7 @@ router.post('/baIcon', (req, res) => {
 
 //一对一聊天，点开聊天窗口时创建
 router.post("/addDoubleChat", ((req, res) => {
-    console.log(req.body)
+    // console.log(req.body)
     let {user1, user2} = req.body;
     user1 = md5(user1);
     user2 = md5(user2);
@@ -651,6 +652,65 @@ router.post("/addDoubleChat", ((req, res) => {
 
     });
 
+
+}));
+//
+
+//创建群组，
+router.post("/addManyChat", ((req, res) => {
+    // console.log(req.body)
+    let {user1, qunName} = req.body;
+    new QunModel({
+        belong_to: user1,//创建人
+        qunName: qunName,//名
+        create_time: {type: Number, default: Date.now},
+    }).save().then(data => {
+        res.send({data: data});
+    })
+
+}));
+//get 群组
+router.post("/getQun1", ((req, res) => {
+    // console.log(req.body)
+    let {user} = req.body;
+    QunModel.find({
+        belong_to: user,//创建人
+    }).then(data => {
+        res.send(data)
+    })
+
+}));
+router.post("/getQun2", ((req, res) => {
+    // console.log(req.body)
+    let {user} = req.body;
+    QunModel.find({
+        teams: user,//创建人
+    }).then(data => {
+        res.send(data)
+    })
+
+}));
+//群组加人
+router.post("/addManyChatPerson", ((req, res) => {
+    // console.log(req.body)
+    let {qunNameID, user2} = req.body;
+    QunModel.findOne({_id: qunNameID}).then(res => {
+        if (res) {
+            let teamsx = res.teams
+            teamsx.push(user2)
+            QunModel.updateOne(
+                {_id: qunNameID}, //条件
+                {teams: teamsx},     //要更新的内容
+                (err, docs) => {
+                    if (err) {
+                        return console.log('更新数据失败');
+                    }
+                    console.log(docs);
+                }
+            )
+        }
+        res.send("err")
+    })
 
 }));
 
