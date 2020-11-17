@@ -16,6 +16,7 @@ var svgCaptcha = require('svg-captcha');
 //var jwt = require('jsonwebtoken');
 var jwts = require('../utill/token.js');
 var formidable = require('../node_modules/formidable');
+var multiparty = require('multiparty');
 router.use("/public/", express.static(path.join(__dirname, './public/')))
 router.use("/node_modules/", express.static(path.join(__dirname, './node_modules/')))
 
@@ -72,59 +73,81 @@ router.post('/login',(req,res,next)=> {
     res.setHeader("Access-Control-Allow-Methods", "GET, POST");
 //const {username,password,captcha}=req.body;
 // console.log(new Date().toLocaleString())
-    const {accesstoken} = req.headers;
-    var {username, password} = req.body.values;
-    password = md5(password);
-    var token = jwts.generateToken({username});
+    var form = new multiparty.Form({
+        encoding: "utf-8",
+        //  uploadDir:"public/upload",  //文件上传地址
+        keepExtensions: true  //保留后缀
+    })
+
+    form.parse(req, function (err, fields, files) {
+        // console.log(fields)
+        // var obj ={};
+        // Object.keys(fields).forEach(function(name) {  //文本
+        //   //  console.log('name:' + name+";filed:"+fields[name]);
+        //     obj[name] = fields[name];
+        // });
+        //   console.log(obj)
+        // Object.keys(files).forEach(function(name) {  //文件
+        //     console.log('name:' + name+";file:"+files[name]);
+        //     obj[name] = files[name];
+        // });
+        //
+        // callback(err,obj);
+        const {accesstoken} = req.headers;
+        //  console.log(req)
+        var {username, password} = fields;
+        password = md5(password);
+        var token = jwts.generateToken({username});
 // console.log(username)
-    //  if(captcha!==req.session.captcha) {
-    //    return res.send({code: 1, msg: '验证码不正确'})
-    //  }
-    //   // 删除保存的验证码
-    // delete req.session.captcha
+        //  if(captcha!==req.session.captcha) {
+        //    return res.send({code: 1, msg: '验证码不正确'})
+        //  }
+        //   // 删除保存的验证码
+        // delete req.session.captcha
 
-    if (accesstoken) {
-        console.log(accesstoken)
-        UserModel.findOne({username}, function (err, user) {
-            res.send({code: 0, data: user});
-        })
-    } else {
-        UserModel.findOne({username}, function (err, user) {
-            //console.log(user)
-            if (user) {
-                role_id = user.role_id;
-                create_time = user.create_time;
-                if (user.password !== password) {
-                    //console.log(user.password);
-                    return res.send({code: 1, msg: '密码不正确!'});
+        if (accesstoken) {
+            console.log(accesstoken)
+            UserModel.findOne({username}, function (err, user) {
+                res.send({code: 0, data: user});
+            })
+        } else {
+            UserModel.findOne({username}, function (err, user) {
+                //console.log(user)
+                if (user) {
+                    role_id = user.role_id;
+                    create_time = user.create_time;
+                    if (user.password !== password) {
+                        //console.log(user.password);
+                        return res.send({code: 1, msg: '密码不正确!'});
+                    } else {
+
+                        UserModel.updateOne(
+                            {username: username},            //匹配的内容
+                            {token: token},     //要更新的内容
+                            /*回调函数*/
+                            (err, docs) => {
+                                if (err) {
+                                    return res.send({code: 1, msg: "token更新失败"})
+                                } else {
+                                    UserModel.findOne({username}, function (err, user) {
+                                        res.send({code: 0, msg: 'login success!', data: user});
+                                    })
+                                }
+                                //res.send({code: 0, data: { username: username,role_id:role_id,create_time:create_time,token:token}});
+
+                            }
+                        )
+
+                    }
+
                 } else {
-
-                    UserModel.updateOne(
-                        {username: username},            //匹配的内容
-                        {token:token},     //要更新的内容
-                        /*回调函数*/
-                        (err, docs)=> {
-                            if (err) {
-                                return res.send({code: 1, msg: "token更新失败"})
-                            }
-                         else{
-                                UserModel.findOne({username}, function (err, user) {
-                                    res.send({code: 0, msg: 'login success!',data: user});
-                                })
-                            }
-                            //res.send({code: 0, data: { username: username,role_id:role_id,create_time:create_time,token:token}});
-
-                        }
-)
-
+                    return res.send({code: 1, msg: '用户名不正确!'});
                 }
+            })
 
-            } else {
-                return res.send({code: 1, msg: '用户名不正确!'});
-            }
-        })
+        }
+    });
 
-    }
 
 });
 //获取所以用户
@@ -414,7 +437,7 @@ router.post('/icon', (req, res) => {
     // res.setHeader("Access-Control-Allow-Methods", "GET, POST");
     const {userInfo} = req.cookies;
     const assessToken = JSON.parse(userInfo).token;
-
+    //  console.log(req)
     // const {username}=req.username
     let form = new formidable.IncomingForm();
     form.uploadDir = "./icon";
@@ -424,17 +447,19 @@ router.post('/icon', (req, res) => {
     });
     form.on('file', (name, file) => {
         // console.log(name);
-        // console.log(file);
+        //  console.log(file);
     });
     form.on('end', () => {
         res.end('upload complete');
     })
     form.parse(req, (err, fields, files) => {
-        //重命名
-        // console.log(file)
-        // console.log(obj.length)
+//         //重命名
+//          console.log(err)
+//         console.log(fields)
+//         console.log(files)
+//         // console.log(obj.length)
         const {username} = fields;
-        //      console.log(username)
+//         //      console.log(username)
         let extname = path.extname(files.file.name);
         let dirname = path.join(__dirname, "../");
         let oldpath = dirname + files.file.path;
