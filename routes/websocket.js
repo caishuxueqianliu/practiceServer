@@ -3,7 +3,7 @@ const expressWs = require("express-ws");
 const router = express.Router();
 expressWs(router);
 var session = require('express-session');
-
+const md5 = require('blueimp-md5');
 
 var cookieParser = require('cookie-parser');
 router.use(cookieParser('liuhao'));
@@ -39,11 +39,20 @@ router.ws("/test", (ws, req) => {
 
   // 监听客户端发来的数据，直接将信息原封不动返回回去
   ws.on("message", msg => {
-    // console.log(msg)
-    connects.forEach(socket => {
+      // console.log(msg)
+      msg = JSON.parse(msg)
+      var msg1 = {
+          "msg": msg.msg,
+          "sendPerson": msg.sendPerson,
+          "icon": md5(msg.sendPerson)
 
-      socket.send(msg);
-    });
+      }
+
+      msg1 = JSON.stringify(msg1)
+      connects.forEach((socket) => {
+          socket.send(msg1)
+
+      });
   })
 });
 // .get('/user', function(req, res) {

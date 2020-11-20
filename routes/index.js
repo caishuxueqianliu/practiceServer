@@ -8,6 +8,7 @@ const BaModel = require('../models/baModel');
 const TieZiModel = require('../models/tieziModel');
 const CommitModel = require('../models/commitModel');
 const ChatListModel = require('../models/ChatListModel');
+const ChatMessageModel = require('../models/ChatMessageModel');
 const ChatModel = require('../models/chatModel');
 const QunModel = require('../models/QunModel');
 const md5 = require('blueimp-md5');
@@ -739,6 +740,23 @@ router.post("/addManyChatPerson", ((req, res) => {
 
 }));
 
+
+//聊天信息获取
+router.get('/chatList', (req, res) => {
+    ChatMessageModel.find().then(data => {
+        res.send(data)
+    })
+
+})
+//聊天信息上传
+router.post('/chatList', (req, res) => {
+    const {msg, sendPerson, icon} = req.body
+    new ChatMessageModel({
+        msg, sendPerson, icon
+    }).save().then(data => {
+        res.send('ok')
+    })
+})
 
 //uoload
 // router.post('/image',(req,res)=>{
