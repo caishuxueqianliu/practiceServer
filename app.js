@@ -7,7 +7,7 @@ var logger = require('morgan');
 const mongoose = require('mongoose')
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-var websocket = require('./routes/websocket');
+//var websocket = require('./routes/websocket');
 //var ws = require('./routes/ws');
 var chat = require('./routes/chat');
 var app = express();
@@ -31,7 +31,7 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/', chat);
 //app.use('/', ws);
-app.use('/', websocket);
+//app.use('/', websocket);
 
 var session = require('express-session')
 
@@ -79,7 +79,7 @@ mongoose.connect('mongodb://localhost/admin_db', {useNewUrlParser: true})
   .then(() => {
     console.log('连接数据库成功!!!')
     // 只有当连接上数据库后才去启动服务器
-    app.listen(3001, () => {
+    app.listen(3000, () => {
         console.log('服务器启动成功, 请访问: http://localhost:3000')
     })
   })

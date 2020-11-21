@@ -460,7 +460,7 @@ router.post('/icon', (req, res) => {
 //         console.log(files)
 //         // console.log(obj.length)
         const {username} = fields;
-//         //      console.log(username)
+     console.log(username)
         let extname = path.extname(files.file.name);
         let dirname = path.join(__dirname, "../");
         let oldpath = dirname + files.file.path;
