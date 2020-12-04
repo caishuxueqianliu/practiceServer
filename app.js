@@ -7,9 +7,13 @@ var logger = require('morgan');
 const mongoose = require('mongoose')
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-//var websocket = require('./routes/websocket');
-//var ws = require('./routes/ws');
-var chat = require('./routes/chat');
+var uploadRouter = require('./routes/upload');
+var tieBaRouter = require('./routes/tieBa');
+var tieZiRouter = require('./routes/tieZi');
+var commitRouter = require('./routes/commit');
+var audioRouter = require('./routes/audio');
+var spawn = require('child_process').spawn;
+
 var app = express();
 expressWs(app);
 var bodyParser = require('body-parser');
@@ -18,6 +22,11 @@ app.set('views', path.join(__dirname, 'views'));
 app.use("/icon/", express.static(path.join(__dirname, './icon/')));
 app.use("/baIcon/", express.static(path.join(__dirname, './baIcon/')))
 app.use("/tiePicture/", express.static(path.join(__dirname, './tiePicture/')))
+app.use("/commitPicture/", express.static(path.join(__dirname, './commitPicture/')))
+app.use("/audio/", express.static(path.join(__dirname, './audio/')))
+
+
+
 app.set('view engine', 'ejs');
 
 app.use(logger('dev'));
@@ -28,10 +37,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({extended: false}))
 app.use(bodyParser.json())
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
-app.use('/', chat);
-//app.use('/', ws);
-//app.use('/', websocket);
+app.use('/', uploadRouter);
+app.use('/', tieBaRouter);
+app.use('/', tieZiRouter);
+app.use('/', commitRouter);
+app.use('/', audioRouter);
+
 
 var session = require('express-session')
 
@@ -72,18 +83,31 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
-   //  app.listen(3000, () => {
-   //    console.log('服务器启动成功, 请访问: http://localhost:3000')
-   // })
-mongoose.connect('mongodb://localhost/admin_db', {useNewUrlParser: true})
-  .then(() => {
-    console.log('连接数据库成功!!!')
-    // 只有当连接上数据库后才去启动服务器
-    app.listen(3000, () => {
-        console.log('服务器启动成功, 请访问: http://localhost:3000')
-    })
-  })
-  .catch(error => {
-    console.error('连接数据库失败！！！', error)
-  })
+    
+  free = spawn('python', ['../util.py']);
+  free.on('exit', function (code, signal) { 
+      console.log(1); 
+         mongoose.connect('mongodb://localhost/admin_db', {useNewUrlParser: true})
+          .then(() => {
+            console.log('连接数据库成功!!')
+            app.listen(3001, () => {
+                console.log('服务器启动成功, 请访问: http://localhost:3001')
+            })
+          })
+          .catch(error => {
+            console.error('连接数据库失败！！！', error)
+          })
+    });
+// 捕获标准错误输出并将其打印到控制台 
+    free.stderr.on('data', function (data) { 
+    console.log(2); 
+    }); 
+    
+    // 注册子进程关闭事件 
+    free.on('exit', function (code, signal) { 
+    console.log(3); 
+     
+    });
+    
+
 module.exports = app;

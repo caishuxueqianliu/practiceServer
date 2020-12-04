@@ -11,9 +11,10 @@ const commitSchema = new mongoose.Schema({
   usernameId: {type: String, required: true},
   create_time: {type: Number, default: Date.now},
   commit: {type: String, required: true},
-  picture: Array,
-  id: {type: String, required: true},
+  picture:{type: Number, required: true},
   oid: {type: String, required: true},
+  follow:{type: Number, required: true},
+  page:{type: Number, required: true}
 
 
 });

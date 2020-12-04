@@ -13,9 +13,10 @@ const tieziSchema = new mongoose.Schema({
   belong_toPerson_MD5: {type: String, required: true},// 发帖人
   title: {type: String, required: true},//标题
   content: {type: String, required: true},//内容
-  picture: Array,//一楼配图
+  picture: Number,//一楼配图
   commit: Array,//评论
   c_commit: Array,//楼中楼
+  page:{type: Number, required: true},
 
   create_time: {type: Number, default: Date.now},
   //role_id: Number     //3为超级管理员，1为普通用户,2为会员用户
@@ -33,7 +34,9 @@ TieZiModel.findOne({belong_toPerson: 'liuhao'}).then(tiezi => {
       belong_toPerson: "liuhao",
       belong_toPerson_MD5: md5("liuhao"),
       title: "ceshi",
-      content: "ceshicontent"
+      content: "ceshicontent",
+      page:1
+      
     })
             .then(tiezi => {
              // console.log('初始化超级管理用户: 用户名: liuhao 密码为: liuhao');

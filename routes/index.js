@@ -2,11 +2,11 @@ var express = require('express');
 var router = express.Router();
 var fs = require('fs');
 var path = require('path');
-
-const UserModel = require('../models/userModel');
-const BaModel = require('../models/baModel');
-const TieZiModel = require('../models/tieziModel');
-const CommitModel = require('../models/commitModel');
+var multiparty = require('multiparty');
+const UserModel = require('../models/UserModel');
+const BaModel = require('../models/BaModel');
+const TieZiModel = require('../models/TieZiModel');
+const CommitModel = require('../models/CommitModel');
 const ChatListModel = require('../models/ChatListModel');
 const ChatMessageModel = require('../models/ChatMessageModel');
 const ChatModel = require('../models/chatModel');
@@ -16,8 +16,7 @@ var session = require('express-session');
 var svgCaptcha = require('svg-captcha');
 //var jwt = require('jsonwebtoken');
 var jwts = require('../utill/token.js');
-var formidable = require('../node_modules/formidable');
-var multiparty = require('multiparty');
+
 router.use("/public/", express.static(path.join(__dirname, './public/')))
 router.use("/node_modules/", express.static(path.join(__dirname, './node_modules/')))
 
@@ -34,46 +33,13 @@ router.use(session({
     cookie: {maxAge: 60000}
 }));
 
-// router.get('/', function(req, res, next) {
-//   res.render('index', { title: 'Express' });
-// });
 
-// HTTP/1.1 200 OK
-// Date: Mon, 01 Dec 2008 01:15:39 GMT
-// Server: Apache/2.0.61 (Unix)
-// Access-Control-Allow-Origin: http://manage.leyou.com
-// Access-Control-Allow-Credentials: true
-// Access-Control-Allow-Methods: GET, POST, PUT
-// Access-Control-Allow-Headers: X-Custom-Header
-// Access-Control-Max-Age: 1728000
-// Content-Type: text/html; charset=utf-8
-// Content-Encoding: gzip
-// Content-Length: 0
-// Keep-Alive: timeout=2, max=100
-// Connection: Keep-Alive
-// Content-Type: text/plain
-router.post('/ceshi',(req,res,next)=>{
-   res.setHeader("Access-Control-Allow-Origin", "*");
- res.setHeader("Access-Control-Allow-Methods", "GET, POST");
- console.log(req.cookie)
-res.send({msg:'postok'})
 
-})
-router.get('/ceshi',(req,res)=>{
- // res.cookie("userName",'张2',{maxAge: 20000, httpOnly: true});
-res.cookie('username', 'zhangsan');
-
- //   res.setHeader("Access-Control-Allow-Origin", "*");
- // res.setHeader("Access-Control-Allow-Methods", "GET, POST");
-res.send({msg:'getok'})
-
-});
 //登陆
 router.post('/login',(req,res,next)=> {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST");
-//const {username,password,captcha}=req.body;
-// console.log(new Date().toLocaleString())
+
     var form = new multiparty.Form({
         encoding: "utf-8",
         //  uploadDir:"public/upload",  //文件上传地址
@@ -107,7 +73,7 @@ router.post('/login',(req,res,next)=> {
         // delete req.session.captcha
 
         if (accesstoken) {
-            console.log(accesstoken)
+            // console.log(accesstoken)
             UserModel.findOne({username}, function (err, user) {
                 res.send({code: 0, data: user});
             })
@@ -191,6 +157,8 @@ else {
        {
            username: username,
            password: md5(password),
+            icon: md5(username),
+            sign:"觉宇宙之无穷，哀吾生之须臾",
            role_id: 0
        }, false).save().then(() => {
        const data = {username: username}
@@ -205,356 +173,10 @@ else {
 
 });
 
-//获取所有贴吧
-router.get('/getBas', (req, res) => {
-    BaModel.find().then(data => {
-        res.send({code: 0, msg: "查询成功", data: data})
-    }).catch(err => {
-        console.log(err);
-        res.send({code: 1, msg: "查询失败"})
-    })
 
 
-});
 
-//获取指定吧所有帖子
-router.post('/getBaTie', (req, res) => {
-   // console.log(req.body)
-    const {baName}=req.body;
-console.log(baName)
 
-    TieZiModel.find({belong_to: baName}).then(data => {
-        res.send({code: 0, msg: "查询成功", data: data})
-    }).catch(err => {
-        console.log(err);
-        res.send({code: 1, msg: "查询失败"})
-    })
-
-    // res.send({code: 1, msg: "查询失败"})
-});
-
-//获取用户所有帖子
-router.post('/getUserTie', (req, res) => {
-    const {username} = req.body
-    console.log(username)
-    TieZiModel.find({belong_toPerson: username}).then(data => {
-        res.send({code: 0, msg: "查询成功", data: data})
-    }).catch(err => {
-        console.log(err);
-        res.send({code: 1, msg: "查询失败"})
-    })
-
-});
-
-
-//创建贴吧
-router.post('/est_ba', (req, res) => {
-    const {accesstoken} = req.headers;
-
-    const {baName, ba_portrait} = req.body;
-
-    var belong_to;
-    // console.log(accesstoken)
-    jwts.verifyToken(accesstoken, (datax => {
-
-        // console.log(datax)
-        const {username} = datax.datas;
-        // console.log(username)
-        belong_to = username;
-
-        UserModel.findOne({username: belong_to}, function (err, user) {
-
-            if (user) {
-                //res.send({code: 1, msg: '用户名已存在'})
-                BaModel.findOne({baName: baName}, (err, ba) => {
-                    if (ba) {
-                        res.send({code: 1, msg: baName + '吧已经存在'})
-                    } else {
-                        new BaModel({baName: baName, belong_to, ba_portrait: md5(baName)}).save().then(data => {
-                            // res.send({code: 0, msg: baName+'吧创建成功',belong_to:belong_to})
-                            res.send({code: 0, msg: "创建成功", data: data})
-                        }).catch(err => {
-                            console.log(err);
-                            res.send({code: 1, msg: "创建失败"})
-                        })
-
-                    }
-                })
-
-
-            } else {
-                res.send({code: 1, msg: 'token无效'})
-            }
-        })
-
-    }));
-
-
-    // console.log(mingwen)
-    //console.log(accesstoken,baName)
-    //res.send({code:0,data:{msg:"贴吧创建完成",baName:baName,belong_to:belong_to}})
-});
-
-
-//发帖
-router.post("/publish", (req, res) => {
-    const {belong_to, title, content, picture} = req.body;
-    const {accesstoken} = req.headers;
-    var belong_toPerson;
-    console.log(accesstoken)
-    console.log(req.body)
-    jwts.verifyToken(accesstoken, (data => {
-
-        const {username} = data.datas;
-        belong_toPerson = username;
-
-       // console.log("username"+username)
-        UserModel.findOne({username: belong_toPerson}, function (err, user) {
-
-            if (user) {
-
-                BaModel.findOne({baName: belong_to}).then(ba => {
-                    if (ba) {
-                        new TieZiModel({
-                            id: md5(belong_toPerson + Date.now()),
-                            belong_toPerson_MD5: md5(belong_toPerson),
-                            belong_to, belong_toPerson, title, content
-                        }).save().then(datas => {
-                            BaModel.updateOne(
-                                {baName: belong_to}, //条件
-                                {$set: {tiezi: datas.title, lastupdate: new Date().toLocaleString()}},
-
-
-                                (err, docs) => {
-                                    if (err) {
-                                        return console.log('更新数据失败');
-                                    }
-                                    console.log(docs);
-                                })
-                            res.send({code: 0, msg: '帖子发布成功', data: datas})
-                        });
-                    } else {
-                        res.send({code: 1, msg: '此贴吧名不存在'})
-                    }
-
-                }).catch(err => {
-                    console.log(err);
-                    res.send({code: 1, msg: '数据库查找吧名失败'})
-                })
-
-
-            } else {
-                res.send({code: 1, msg: 'token无效'})
-            }
-
-        })
-    }));
-
-
-});
-
-//帖子详情
-router.post('/getTieContent', (req, res) => {
-
-    const {tieId} = req.body;
- console.log(tieId)
-        TieZiModel.find({id: tieId}, function (err, tie) {
-
-            if (tie) {
-               res.send({code: 1, msg: '查询成功',data:tie})
-
-
-
-            } else {
-                res.send({code: 1, msg: '帖子查询错误'})
-            }
-        })
-
-
-
-
-    // console.log(mingwen)
-    //console.log(accesstoken,baName)
-    //res.send({code:0,data:{msg:"贴吧创建完成",baName:baName,belong_to:belong_to}})
-});
-
-//评论
-router.post("/commit", (req, res) => {
-    const {oid, username, content, picture} = req.body;
-    const {accesstoken} = req.headers;
-    var belong_toPerson;
-    // console.log(accesstoken)
-    // console.log(req.body)
-    jwts.verifyToken(accesstoken, (data => {
-
-        const {username} = data.datas;
-        belong_toPerson = username;
-
-        // console.log("username"+username)
-        new CommitModel({
-            username: username, // 用户名
-            commit: content,
-            picture: picture,
-            usernameId: md5(username),
-            id: md5(username + Date.now()),
-            oid: oid
-        }).save().then(xx => {
-            // console.log(oid)
-            TieZiModel.findOne({id: oid}).then(data => {
-                console.log(data)
-                var commit = data.commit;
-                commit.push(xx);
-                TieZiModel.updateOne(
-                    {id: oid}, //条件
-                    {commit: commit},     //要更新的内容
-
-                    (err, docs) => {
-                        if (err) {
-                       return console.log('更新数据失败');
-                   }
-                       res.send({code: 0, msg: "commit success"})
-               }
-           )
-
-           })
-
-
-
-       })
-
-        // } else {
-        //     res.send({code: 1, msg: 'token无效'})
-        // }
-
-
-    }));
-
-
-});
-
-//upload//头像
-router.post('/icon', (req, res) => {
-    // res.setHeader("Access-Control-Allow-Origin", "*");
-    // res.setHeader("Access-Control-Allow-Methods", "GET, POST");
-    const {userInfo} = req.cookies;
-    const assessToken = JSON.parse(userInfo).token;
-    //  console.log(req)
-    // const {username}=req.username
-    let form = new formidable.IncomingForm();
-    form.uploadDir = "./icon";
-    form.on('field', (field, value) => {
-        // console.log(field);
-        // console.log(value);
-    });
-    form.on('file', (name, file) => {
-        // console.log(name);
-        //  console.log(file);
-    });
-    form.on('end', () => {
-        res.end('upload complete');
-    })
-    form.parse(req, (err, fields, files) => {
-//         //重命名
-//          console.log(err)
-//         console.log(fields)
-//         console.log(files)
-//         // console.log(obj.length)
-        const {username} = fields;
-     console.log(username)
-        let extname = path.extname(files.file.name);
-        let dirname = path.join(__dirname, "../");
-        let oldpath = dirname + files.file.path;
-        // console.log(oldpath)
-        let newpath = dirname + 'icon/' + md5(username) + ".jpg";
-        // console.log(newpath)
-        fs.rename(oldpath, newpath, () => {
-            // console.log(112)
-        });
-
-        // UserModel.findOne({username:username})
-        jwts.verifyToken(assessToken, (xx => {
-// console.log(username)
-            const usernameObj = xx.datas;
-            UserModel.updateOne(
-                usernameObj, //条件
-                {icon: md5(username)},
-                (err, docs) => {
-                    if (err) {
-                        return console.log('更新数据失败');
-                    }
-                    // console.log(docs);
-                    //res.send({code:0,msg:"头像修改成功"})
-                }
-            )
-        }))
-
-
-    });
-
-    // res.send({code:0,msg:"头像修改成功"})
-    res.send('2')
-})
-//upload//帖子图片
-router.post('/tiePicture', (req, res) => {
-    // res.setHeader("Access-Control-Allow-Origin", "*");
-    // res.setHeader("Access-Control-Allow-Methods", "GET, POST");
-    const {userInfo} = req.cookies;
-    const assessToken = JSON.parse(userInfo).token;
-    // const {picId}=req.body;
-
-    // const {username}=req.username
-    let form = new formidable.IncomingForm();
-    form.uploadDir = "./tiePicture";
-    form.on('field', (field, value) => {
-        // console.log(field);
-        // console.log(value);
-    });
-    form.on('file', (name, file) => {
-        // console.log(name);
-        // console.log(file);
-    });
-    form.on('end', () => {
-        res.end('upload complete');
-    });
-    var pictureArr = [];
-    var picId;
-    form.parse(req, (err, fields, files) => {
-
-        picId = fields.picId;
-
-        let extname = path.extname(files.file.name);
-
-        let dirname = path.join(__dirname, "../");
-        let oldpath = dirname + files.file.path;
-
-        let newpath = dirname + 'tiePicture/' + picId + ".jpg";
-        pictureArr.push(picId);
-        fs.rename(oldpath, newpath, () => {
-            // console.log(oldpath)
-            // console.log(newpath)
-        });
-
-
-        jwts.verifyToken(assessToken, (xx => {
-            // console.log(pictureArr)
-            TieZiModel.updateOne(
-                {id: picId}, //条件
-                {picture: pictureArr},
-                (err, docs) => {
-                    if (err) {
-                        return console.log('更新数据失败');
-                    }
-                    console.log("ok");
-                    //res.send({code:0,msg:"头像修改成功"})
-                }
-            )
-        }))
-
-    });
-
-
-    res.send('2')
-})
 
 //upload个签
 router.post('/sign', (req, res) => {
@@ -581,67 +203,6 @@ router.post('/sign', (req, res) => {
 
 });
 
-//upload 吧头像
-router.post('/baIcon', (req, res) => {
-    // res.setHeader("Access-Control-Allow-Origin", "*");
-    // res.setHeader("Access-Control-Allow-Methods", "GET, POST");
-    const {baName} = req.body;
-    const {userInfo} = req.cookies;
-    const assessToken = JSON.parse(userInfo).token;
-
-    // const {username}=req.username
-    let form = new formidable.IncomingForm();
-    form.uploadDir = "./icon";
-    form.on('field', (field, value) => {
-        // console.log(field);
-        // console.log(value);
-    });
-    form.on('file', (name, file) => {
-        // console.log(name);
-        // console.log(file);
-    });
-    form.on('end', () => {
-        res.end('upload complete');
-    })
-    form.parse(req, (err, fields, files) => {
-        //重命名
-        // console.log(file)
-        // console.log(obj.length)
-        const {username} = fields;
-        //      console.log(username)
-        let extname = path.extname(files.file.name);
-        let dirname = path.join(__dirname, "../");
-        let oldpath = dirname + files.file.path;
-        // console.log(oldpath)
-        let newpath = dirname + 'baIcon/' + md5(baName) + ".jpg";
-        // console.log(newpath)
-        fs.rename(oldpath, newpath, () => {
-            // console.log(112)
-        });
-
-        // UserModel.findOne({username:username})
-        jwts.verifyToken(assessToken, (xx => {
-// console.log(username)
-            const usernameObj = xx.datas;
-            // BaModel.updateOne(
-            //     usernameObj, //条件
-            //     {icon: md5(username)},
-            //     (err, docs) => {
-            //         if (err) {
-            //             return console.log('更新数据失败');
-            //         }
-            //         // console.log(docs);
-            //         //res.send({code:0,msg:"头像修改成功"})
-            //     }
-            // )
-        }))
-
-
-    });
-
-    // res.send({code:0,msg:"头像修改成功"})
-    res.send('2')
-})
 
 
 //聊天相关
@@ -946,15 +507,6 @@ router.post('/token', function (req,res,next) {
 });
 
 
-//发布内容
-router.post('/publish',(req,res,next)=>{
-
-console.log(new Date().toLocaleString())
-
-
-
-
-})
 
 
 
